@@ -3,7 +3,6 @@
 namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
-
 use SensitiveParameter;
 
 use function hash;
@@ -24,56 +23,38 @@ final class Encoding {
 	 *
 	 * @return string
 	 */
-	public static function trimTrailingWhitespace($string = '')
-	{
-		$length = Core::ourStrlen($string);
-		if ($length < 1)
-		{
-			return '';
-		}
-		do
-		{
-			$prevLength = $length;
-			$last = $length - 1;
-			$chr = ord($string[$last]);
+public static function trimTrailingWhitespace($string = '')
+{
+    $length = Core::ourStrlen($string);
+    if ($length < 1)
+    {
+        return '';
+    }
 
-			/* Null Byte (0x00), a.k.a. \0 */
-			// if ($chr === 0x00) $length -= 1;
-			$sub = (($chr - 1) >> 8) & 1;
-			$length -= $sub;
-			$last -= $sub;
+    do
+    {
+        $prevLength = $length;
+        $lastChar = ord($string[$length - 1]);
+        
+        // Using a while loop makes it cleaner to handle multiple types of characters
+        while ($length > 0 && ($lastChar === 0x00 ||  // Null Byte
+                               $lastChar === 0x09 ||  // Horizontal Tab
+                               $lastChar === 0x0a ||  // New Line
+                               $lastChar === 0x0d ||  // Carriage Return
+                               $lastChar === 0x20))   // Space
+        {
+            $length--;
+            if ($length > 0)
+            {
+                $lastChar = ord($string[$length - 1]);
+            }
+        }
+    }
+    while ($prevLength !== $length && $length > 0);
 
-			/* Horizontal Tab (0x09) a.k.a. \t */
-			$chr = ord($string[$last]);
-			// if ($chr === 0x09) $length -= 1;
-			$sub = (((0x08 - $chr) & ($chr - 0x0a)) >> 8) & 1;
-			$length -= $sub;
-			$last -= $sub;
+    return (string)Core::ourSubstr($string, 0, $length);
+}
 
-			/* New Line (0x0a), a.k.a. \n */
-			$chr = ord($string[$last]);
-			// if ($chr === 0x0a) $length -= 1;
-			$sub = (((0x09 - $chr) & ($chr - 0x0b)) >> 8) & 1;
-			$length -= $sub;
-			$last -= $sub;
-
-			/* Carriage Return (0x0D), a.k.a. \r */
-			$chr = ord($string[$last]);
-			// if ($chr === 0x0d) $length -= 1;
-			$sub = (((0x0c - $chr) & ($chr - 0x0e)) >> 8) & 1;
-			$length -= $sub;
-			$last -= $sub;
-
-			/* Space */
-			$chr = ord($string[$last]);
-			// if ($chr === 0x20) $length -= 1;
-			$sub = (((0x1f - $chr) & ($chr - 0x21)) >> 8) & 1;
-			$length -= $sub;
-		}
-		while ($prevLength !== $length && $length > 0);
-
-		return (string)Core::ourSubstr($string, 0, $length);
-	}
 
 	/**
 	 * INTERNAL USE ONLY: Applies a version header, applies a checksum, and

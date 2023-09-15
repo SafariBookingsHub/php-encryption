@@ -3,7 +3,6 @@
 namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
-
 use SensitiveParameter;
 use TypeError;
 

@@ -3,7 +3,6 @@
 namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
-
 use SensitiveParameter;
 
 use function hash;
@@ -98,11 +97,13 @@ final class KeyOrPassword {
 
 		$prekey = '';
 
-		if ($this->secret_type === self::SECRET_TYPE_KEY) {
+		if ($this->secret_type === self::SECRET_TYPE_KEY)
+		{
 			Core::ensureTrue($this->secret instanceof Key);
 			$prekey = $this->secret->getRawBytes();
 		}
-		elseif ($this->secret_type === self::SECRET_TYPE_PASSWORD) {
+		elseif ($this->secret_type === self::SECRET_TYPE_PASSWORD)
+		{
 			Core::ensureTrue(is_string($this->secret));
 			$prehash = hash(Core::HASH_FUNCTION_NAME, $this->secret, true);
 			$prekey = Core::pbkdf2(
@@ -114,7 +115,8 @@ final class KeyOrPassword {
 				true
 			);
 		}
-		else {
+		else
+		{
 			throw new Ex\EnvironmentIsBrokenException('Bad secret type.');
 		}
 

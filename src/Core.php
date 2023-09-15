@@ -3,10 +3,8 @@
 namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
-
 use Exception;
 use InvalidArgumentException;
-
 use SensitiveParameter;
 
 use function ceil;
