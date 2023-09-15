@@ -2,6 +2,5 @@
 
 namespace Defuse\Crypto\Exception;
 
-class BadFormatException extends \Defuse\Crypto\Exception\CryptoException
-{
+class BadFormatException extends \Defuse\Crypto\Exception\CryptoException {
 }

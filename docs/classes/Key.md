@@ -90,7 +90,7 @@ appended to files when working with text editors.
 1. `$saved_key_string` is the string returned from `saveToAsciiSafeString()`
    when the original `Key` instance was saved.
 2. `$do_not_trim` should be set to `TRUE` if you do not wish for the library
-   to automatically strip trailing whitespace from the string. 
+   to automatically strip trailing whitespace from the string.
 
 **Return value:**
 

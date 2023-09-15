@@ -26,7 +26,7 @@ Encrypts a plaintext string using a secret key.
 1. `$plaintext` is the string to encrypt.
 2. `$key` is an instance of `Key` containing the secret key for encryption.
 3. `$raw_binary` determines whether the output will be a byte string (true) or
-  hex encoded (false, the default).
+   hex encoded (false, the default).
 
 **Return value:**
 
@@ -127,7 +127,7 @@ Encrypts a plaintext string using a secret password.
 1. `$plaintext` is the string to encrypt.
 2. `$password` is a string containing the secret password used for encryption.
 3. `$raw_binary` determines whether the output will be a byte string (true) or
-  hex encoded (false, the default).
+   hex encoded (false, the default).
 
 **Return value:**
 

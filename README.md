@@ -100,7 +100,8 @@ Public Keys
 ------------
 
 The GnuPG public key used to sign the current and new releases is available in
-[dist/signingkey-new.asc](https://github.com/defuse/php-encryption/raw/master/dist/signingkey-new.asc). Its fingerprint is:
+[dist/signingkey-new.asc](https://github.com/defuse/php-encryption/raw/master/dist/signingkey-new.asc). Its fingerprint
+is:
 
 ```
 6DD6 E677 0281 5846 FC85  25A3 DD2E 507F 7BDB 1669
@@ -111,7 +112,8 @@ page](https://defuse.ca/contact.htm) and
 [twitter](https://twitter.com/DefuseSec/status/1670840796743081984).
 
 Older releases were signed with a (now-expired) available in
-[dist/signingkey-old.asc](https://github.com/defuse/php-encryption/raw/master/dist/signingkey-old.asc). The old key's fingerprint is:
+[dist/signingkey-old.asc](https://github.com/defuse/php-encryption/raw/master/dist/signingkey-old.asc). The old key's
+fingerprint is:
 
 ```
 2FA6 1D8D 99B9 2658 6BAC  3D53 385E E055 A129 1538
