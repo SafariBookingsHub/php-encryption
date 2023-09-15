@@ -265,7 +265,7 @@ final class Encoding {
 
 		while ($hex_pos < $hex_len)
 		{
-			$c = \ord($hex_string[$hex_pos]);
+			$c = ord($hex_string[$hex_pos]);
 			$c_num = $c ^ 48;
 			$c_num0 = ($c_num - 10) >> 8;
 			$c_alpha = ($c & ~32) - 55;
@@ -283,7 +283,7 @@ final class Encoding {
 			}
 			else
 			{
-				$bin .= \pack('C', $c_acc | $c_val);
+				$bin .= pack('C', $c_acc | $c_val);
 			}
 			$state ^= 1;
 			++$hex_pos;
