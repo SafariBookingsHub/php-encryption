@@ -4,6 +4,37 @@ namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
 
+use Exception;
+use InvalidArgumentException;
+
+use SensitiveParameter;
+
+use function ceil;
+use function chr;
+use function defined;
+use function extension_loaded;
+use function function_exists;
+use function hash;
+use function hash_algos;
+use function hash_equals;
+use function hash_hkdf;
+use function hash_hmac;
+use function hash_pbkdf2;
+use function in_array;
+use function is_callable;
+use function is_int;
+use function is_null;
+use function is_string;
+use function mb_strlen;
+use function mb_substr;
+use function ord;
+use function pack;
+use function random_bytes;
+use function str_repeat;
+use function strlen;
+use function strtolower;
+use function substr;
+
 final class Core {
 	const HEADER_VERSION_SIZE = 4;
 	const MINIMUM_CIPHERTEXT_SIZE = 84;
@@ -55,7 +86,7 @@ final class Core {
 		);
 
 		Core::ensureTrue(
-			\is_int($inc),
+			is_int($inc),
 			'Trying to increment nonce by a non-integer.'
 		);
 
@@ -76,13 +107,13 @@ final class Core {
 		 */
 		for ($i = Core::BLOCK_BYTE_SIZE - 1; $i >= 0; --$i)
 		{
-			$sum = \ord($ctr[$i]) + $inc;
+			$sum = ord($ctr[$i]) + $inc;
 
 			/* Detect integer overflow and fail. */
-			Core::ensureTrue(\is_int($sum),
+			Core::ensureTrue(is_int($sum),
 				'Integer overflow in CTR mode nonce increment');
 
-			$ctr[$i] = \pack('C', $sum & 0xFF);
+			$ctr[$i] = pack('C', $sum & 0xFF);
 			$inc = $sum >> 8;
 		}
 
@@ -121,19 +152,19 @@ final class Core {
 		static $exists = null;
 		if ($exists === null)
 		{
-			$exists = \extension_loaded('mbstring')
-				&& \function_exists('mb_strlen');
+			$exists = extension_loaded('mbstring')
+				&& function_exists('mb_strlen');
 		}
 		if ($exists)
 		{
-			$length = \mb_strlen($str, '8bit');
+			$length = mb_strlen($str, '8bit');
 			Core::ensureTrue($length !== false);
 
 			return $length;
 		}
 		else
 		{
-			return \strlen($str);
+			return strlen($str);
 		}
 	}
 
@@ -157,37 +188,37 @@ final class Core {
 		static $nativeHKDF = null;
 		if ($nativeHKDF === null)
 		{
-			$nativeHKDF = \is_callable('\\hash_hkdf');
+			$nativeHKDF = is_callable('\\hash_hkdf');
 		}
 		if ($nativeHKDF)
 		{
-			if (\is_null($salt))
+			if (is_null($salt))
 			{
 				$salt = '';
 			}
 
-			return \hash_hkdf($hash, $ikm, $length, $info, $salt);
+			return hash_hkdf($hash, $ikm, $length, $info, $salt);
 		}
 
-		$digest_length = Core::ourStrlen(\hash_hmac($hash, '', '', true));
+		$digest_length = Core::ourStrlen(hash_hmac($hash, '', '', true));
 
 		// Sanity-check the desired output length.
 		Core::ensureTrue(
-			! empty($length) && \is_int($length) && $length >= 0
+			! empty($length) && is_int($length) && $length >= 0
 			&& $length <= 255 * $digest_length,
 			'Bad output length requested of HDKF.'
 		);
 
 		// "if [salt] not provided, is set to a string of HashLen zeroes."
-		if (\is_null($salt))
+		if (is_null($salt))
 		{
-			$salt = \str_repeat("\x00", $digest_length);
+			$salt = str_repeat("\x00", $digest_length);
 		}
 
 		// HKDF-Extract:
 		// PRK = HMAC-Hash(salt, IKM)
 		// The salt is the HMAC key.
-		$prk = \hash_hmac($hash, $ikm, $salt, true);
+		$prk = hash_hmac($hash, $ikm, $salt, true);
 
 		// HKDF-Expand:
 
@@ -200,9 +231,9 @@ final class Core {
 		for ($block_index = 1; Core::ourStrlen($t) < $length; ++$block_index)
 		{
 			// T(i) = HMAC-Hash(PRK, T(i-1) | info | 0x??)
-			$last_block = \hash_hmac(
+			$last_block = hash_hmac(
 				$hash,
-				$last_block.$info.\chr($block_index),
+				$last_block.$info.chr($block_index),
 				$prk,
 				true
 			);
@@ -213,7 +244,7 @@ final class Core {
 		// ORM = first L octets of T
 		/** @var string $orm */
 		$orm = Core::ourSubstr($t, 0, $length);
-		Core::ensureTrue(\is_string($orm));
+		Core::ensureTrue(is_string($orm));
 
 		return $orm;
 	}
@@ -234,8 +265,8 @@ final class Core {
 		static $exists = null;
 		if ($exists === null)
 		{
-			$exists = \extension_loaded('mbstring')
-				&& \function_exists('mb_substr');
+			$exists = extension_loaded('mbstring')
+				&& function_exists('mb_substr');
 		}
 
 		// This is required to make mb_substr behavior identical to substr.
@@ -269,14 +300,14 @@ final class Core {
 
 		if ($length < 0)
 		{
-			throw new \InvalidArgumentException(
+			throw new InvalidArgumentException(
 				"Negative lengths are not supported with ourSubstr."
 			);
 		}
 
 		if ($exists)
 		{
-			$substr = \mb_substr($str, $start, $length, '8bit');
+			$substr = mb_substr($str, $start, $length, '8bit');
 			// At this point there are two cases where mb_substr can
 			// legitimately return an empty string. Either $length is 0, or
 			// $start is equal to the length of the string (both mb_substr and
@@ -297,7 +328,7 @@ final class Core {
 			return $substr;
 		}
 
-		return \substr($str, $start, $length);
+		return substr($str, $start, $length);
 	}
 
 	/**
@@ -316,11 +347,11 @@ final class Core {
 		static $native = null;
 		if ($native === null)
 		{
-			$native = \function_exists('hash_equals');
+			$native = function_exists('hash_equals');
 		}
 		if ($native)
 		{
-			return \hash_equals($expected, $given);
+			return hash_equals($expected, $given);
 		}
 
 		// We can't just compare the strings with '==', since it would make
@@ -336,8 +367,8 @@ final class Core {
 			=== Core::ourStrlen($given));
 
 		$blind = Core::secureRandom(32);
-		$message_compare = \hash_hmac(Core::HASH_FUNCTION_NAME, $given, $blind);
-		$correct_compare = \hash_hmac(Core::HASH_FUNCTION_NAME, $expected,
+		$message_compare = hash_hmac(Core::HASH_FUNCTION_NAME, $given, $blind);
+		$correct_compare = hash_hmac(Core::HASH_FUNCTION_NAME, $expected,
 			$blind);
 
 		return $correct_compare === $message_compare;
@@ -363,9 +394,9 @@ final class Core {
 		self::ensureFunctionExists('random_bytes');
 		try
 		{
-			return \random_bytes(max(1, $octets));
+			return random_bytes(max(1, $octets));
 		}
-		catch (\Exception $ex)
+		catch (Exception $ex)
 		{
 			throw new Ex\EnvironmentIsBrokenException(
 				'Your system does not have a secure random number generator.'
@@ -391,7 +422,7 @@ final class Core {
 	public static function ensureFunctionExists($name)
 	{
 		Core::ensureTrue(
-			\function_exists($name),
+			function_exists($name),
 			'function '.$name.' does not exists'
 		);
 	}
@@ -408,7 +439,7 @@ final class Core {
 	public static function ensureConstantExists($name)
 	{
 		Core::ensureTrue(
-			\defined($name),
+			defined($name),
 			'Constant '.$name.' does not exists'
 		);
 	}
@@ -433,7 +464,7 @@ final class Core {
 	 */
 	public static function pbkdf2(
 		$algorithm,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$password,
 		$salt,
 		$count,
@@ -441,21 +472,21 @@ final class Core {
 		$raw_output = false
 	) {
 		// Type checks:
-		if ( ! \is_string($algorithm))
+		if ( ! is_string($algorithm))
 		{
-			throw new \InvalidArgumentException(
+			throw new InvalidArgumentException(
 				'pbkdf2(): algorithm must be a string'
 			);
 		}
-		if ( ! \is_string($password))
+		if ( ! is_string($password))
 		{
-			throw new \InvalidArgumentException(
+			throw new InvalidArgumentException(
 				'pbkdf2(): password must be a string'
 			);
 		}
-		if ( ! \is_string($salt))
+		if ( ! is_string($salt))
 		{
-			throw new \InvalidArgumentException(
+			throw new InvalidArgumentException(
 				'pbkdf2(): salt must be a string'
 			);
 		}
@@ -463,9 +494,9 @@ final class Core {
 		$count += 0;
 		$key_length += 0;
 
-		$algorithm = \strtolower($algorithm);
+		$algorithm = strtolower($algorithm);
 		Core::ensureTrue(
-			\in_array($algorithm, \hash_algos(), true),
+			in_array($algorithm, hash_algos(), true),
 			'Invalid or unsupported hash algorithm.'
 		);
 
@@ -482,14 +513,14 @@ final class Core {
 			'whirlpool',
 		];
 		Core::ensureTrue(
-			\in_array($algorithm, $ok_algorithms, true),
+			in_array($algorithm, $ok_algorithms, true),
 			'Algorithm is not a secure cryptographic hash function.'
 		);
 
 		Core::ensureTrue($count > 0 && $key_length > 0,
 			'Invalid PBKDF2 parameters.');
 
-		if (\function_exists('hash_pbkdf2'))
+		if (function_exists('hash_pbkdf2'))
 		{
 			// The output length is in NIBBLES (4-bits) if $raw_output is false!
 			if ( ! $raw_output)
@@ -497,27 +528,27 @@ final class Core {
 				$key_length = $key_length * 2;
 			}
 
-			return \hash_pbkdf2($algorithm, $password, $salt, $count,
+			return hash_pbkdf2($algorithm, $password, $salt, $count,
 				$key_length, $raw_output);
 		}
 
-		$hash_length = Core::ourStrlen(\hash($algorithm, '', true));
-		$block_count = \ceil($key_length / $hash_length);
+		$hash_length = Core::ourStrlen(hash($algorithm, '', true));
+		$block_count = ceil($key_length / $hash_length);
 
 		$output = '';
 		for ($i = 1; $i <= $block_count; $i++)
 		{
 			// $i encoded as 4 bytes, big endian.
-			$last = $salt.\pack('N', $i);
+			$last = $salt.pack('N', $i);
 			// first iteration
-			$last = $xorsum = \hash_hmac($algorithm, $last, $password, true);
+			$last = $xorsum = hash_hmac($algorithm, $last, $password, true);
 			// perform the other $count - 1 iterations
 			for ($j = 1; $j < $count; $j++)
 			{
 				/**
 				 * @psalm-suppress InvalidOperand
 				 */
-				$xorsum ^= ($last = \hash_hmac($algorithm, $last, $password,
+				$xorsum ^= ($last = hash_hmac($algorithm, $last, $password,
 					true));
 			}
 			$output .= $xorsum;

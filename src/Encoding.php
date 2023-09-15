@@ -4,6 +4,11 @@ namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
 
+use SensitiveParameter;
+
+use function hash;
+use function ord;
+
 final class Encoding {
 	const CHECKSUM_BYTE_SIZE = 32;
 	const CHECKSUM_HASH_ALGO = 'sha256';
@@ -30,7 +35,7 @@ final class Encoding {
 		{
 			$prevLength = $length;
 			$last = $length - 1;
-			$chr = \ord($string[$last]);
+			$chr = ord($string[$last]);
 
 			/* Null Byte (0x00), a.k.a. \0 */
 			// if ($chr === 0x00) $length -= 1;
@@ -39,28 +44,28 @@ final class Encoding {
 			$last -= $sub;
 
 			/* Horizontal Tab (0x09) a.k.a. \t */
-			$chr = \ord($string[$last]);
+			$chr = ord($string[$last]);
 			// if ($chr === 0x09) $length -= 1;
 			$sub = (((0x08 - $chr) & ($chr - 0x0a)) >> 8) & 1;
 			$length -= $sub;
 			$last -= $sub;
 
 			/* New Line (0x0a), a.k.a. \n */
-			$chr = \ord($string[$last]);
+			$chr = ord($string[$last]);
 			// if ($chr === 0x0a) $length -= 1;
 			$sub = (((0x09 - $chr) & ($chr - 0x0b)) >> 8) & 1;
 			$length -= $sub;
 			$last -= $sub;
 
 			/* Carriage Return (0x0D), a.k.a. \r */
-			$chr = \ord($string[$last]);
+			$chr = ord($string[$last]);
 			// if ($chr === 0x0d) $length -= 1;
 			$sub = (((0x0c - $chr) & ($chr - 0x0e)) >> 8) & 1;
 			$length -= $sub;
 			$last -= $sub;
 
 			/* Space */
-			$chr = \ord($string[$last]);
+			$chr = ord($string[$last]);
 			// if ($chr === 0x20) $length -= 1;
 			$sub = (((0x1f - $chr) & ($chr - 0x21)) >> 8) & 1;
 			$length -= $sub;
@@ -83,7 +88,7 @@ final class Encoding {
 	 */
 	public static function saveBytesToChecksummedAsciiSafeString(
 		$header,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$bytes
 	) {
 		// Headers must be a constant length to prevent one type's header from
@@ -96,7 +101,7 @@ final class Encoding {
 		return Encoding::binToHex(
 			$header.
 			$bytes.
-			\hash(
+			hash(
 				self::CHECKSUM_HASH_ALGO,
 				$header.$bytes,
 				true
@@ -121,7 +126,7 @@ final class Encoding {
 
 		for ($i = 0; $i < $len; ++$i)
 		{
-			$byte = \ord($byte_string[$i]);
+			$byte = ord($byte_string[$i]);
 
 			// Extract the lower 4 bits (rightmost hex digit)
 			$lowNibble = $byte & 0xf;
@@ -133,7 +138,7 @@ final class Encoding {
 			$hexHigh = self::decimalToHexChar($highNibble);
 			$hexLow = self::decimalToHexChar($lowNibble);
 
-			$hex .= $hexHigh . $hexLow;
+			$hex .= $hexHigh.$hexLow;
 		}
 
 		return $hex;
@@ -143,17 +148,20 @@ final class Encoding {
 	 * Convert a decimal value (0-15) to its corresponding hexadecimal character.
 	 *
 	 * @param int $decimalValue Value between 0 and 15 inclusive.
+	 *
 	 * @return string The corresponding hexadecimal character.
 	 */
 	private static function decimalToHexChar($decimalValue)
 	{
 		// If value is between 0 and 9, return the character representation of that value
-		if ($decimalValue >= 0 && $decimalValue <= 9) {
+		if ($decimalValue >= 0 && $decimalValue <= 9)
+		{
 			return chr(48 + $decimalValue); // 48 is the ASCII value for '0'
 		}
 
 		// If value is between 10 and 15, return the character representation (A-F)
-		return chr(87 + $decimalValue); // 87 is the ASCII value for 'a' minus 10
+		return chr(87
+			+ $decimalValue); // 87 is the ASCII value for 'a' minus 10
 	}
 
 	/*
@@ -199,7 +207,7 @@ final class Encoding {
 	 */
 	public static function loadBytesFromChecksummedAsciiSafeString(
 		$expected_header,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$string
 	) {
 		// Headers must be a constant length to prevent one type's header from
@@ -249,7 +257,7 @@ final class Encoding {
 		);
 
 		/* Re-compute the checksum. */
-		$checksum_b = \hash(self::CHECKSUM_HASH_ALGO, $checked_bytes, true);
+		$checksum_b = hash(self::CHECKSUM_HASH_ALGO, $checked_bytes, true);
 
 		/* Check if the checksum matches. */
 		if ( ! Core::hashEquals($checksum_a, $checksum_b))

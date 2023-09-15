@@ -3,6 +3,7 @@
 namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
+use SensitiveParameter;
 
 final class Key {
 	const KEY_CURRENT_VERSION = "\xDE\xF0\x00\x00";
@@ -21,7 +22,7 @@ final class Key {
 	 * @throws Ex\EnvironmentIsBrokenException
 	 */
 	private function __construct(
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$bytes
 	) {
 		Core::ensureTrue(
@@ -59,7 +60,7 @@ final class Key {
 	 * @throws Ex\BadFormatException
 	 */
 	public static function loadFromAsciiSafeString(
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$saved_key_string,
 		$do_not_trim = false
 	) {

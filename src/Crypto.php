@@ -4,6 +4,17 @@ namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
 
+use SensitiveParameter;
+use TypeError;
+
+use function gettype;
+use function hash_hmac;
+use function is_bool;
+use function is_string;
+use function openssl_decrypt;
+use function openssl_encrypt;
+use function ucfirst;
+
 class Crypto {
 	/**
 	 * Encrypts a string with a Key.
@@ -13,31 +24,31 @@ class Crypto {
 	 * @param bool   $raw_binary
 	 *
 	 * @return string
-	 * @throws \TypeError
+	 * @throws TypeError
 	 *
 	 * @throws Ex\EnvironmentIsBrokenException
 	 */
 	public static function encrypt($plaintext, $key, $raw_binary = false)
 	{
-		if ( ! \is_string($plaintext))
+		if ( ! is_string($plaintext))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'String expected for argument 1. '
-				.\ucfirst(\gettype($plaintext)).' given instead.'
+				.ucfirst(gettype($plaintext)).' given instead.'
 			);
 		}
 		if ( ! ($key instanceof Key))
 		{
-			throw new \TypeError(
-				'Key expected for argument 2. '.\ucfirst(\gettype($key))
+			throw new TypeError(
+				'Key expected for argument 2. '.ucfirst(gettype($key))
 				.' given instead.'
 			);
 		}
-		if ( ! \is_bool($raw_binary))
+		if ( ! is_bool($raw_binary))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'Boolean expected for argument 3. '
-				.\ucfirst(\gettype($raw_binary)).' given instead.'
+				.ucfirst(gettype($raw_binary)).' given instead.'
 			);
 		}
 
@@ -72,7 +83,7 @@ class Crypto {
 
 		$ciphertext = Core::CURRENT_VERSION.$salt.$iv
 			.self::plainEncrypt($plaintext, $ekey, $iv);
-		$auth = \hash_hmac(Core::HASH_FUNCTION_NAME, $ciphertext, $akey, true);
+		$auth = hash_hmac(Core::HASH_FUNCTION_NAME, $ciphertext, $akey, true);
 		$ciphertext = $ciphertext.$auth;
 
 		if ($raw_binary)
@@ -96,15 +107,15 @@ class Crypto {
 	 */
 	protected static function plainEncrypt(
 		$plaintext,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$key,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$iv
 	) {
 		Core::ensureConstantExists('OPENSSL_RAW_DATA');
 		Core::ensureFunctionExists('openssl_encrypt');
 		/** @var string $ciphertext */
-		$ciphertext = \openssl_encrypt(
+		$ciphertext = openssl_encrypt(
 			$plaintext,
 			Core::CIPHER_METHOD,
 			$key,
@@ -112,7 +123,7 @@ class Crypto {
 			$iv
 		);
 
-		Core::ensureTrue(\is_string($ciphertext), 'openssl_encrypt() failed');
+		Core::ensureTrue(is_string($ciphertext), 'openssl_encrypt() failed');
 
 		return $ciphertext;
 	}
@@ -126,35 +137,35 @@ class Crypto {
 	 * @param bool   $raw_binary
 	 *
 	 * @return string
-	 * @throws \TypeError
+	 * @throws TypeError
 	 *
 	 * @throws Ex\EnvironmentIsBrokenException
 	 */
 	public static function encryptWithPassword(
 		$plaintext,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$password,
 		$raw_binary = false
 	) {
-		if ( ! \is_string($plaintext))
+		if ( ! is_string($plaintext))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'String expected for argument 1. '
-				.\ucfirst(\gettype($plaintext)).' given instead.'
+				.ucfirst(gettype($plaintext)).' given instead.'
 			);
 		}
-		if ( ! \is_string($password))
+		if ( ! is_string($password))
 		{
-			throw new \TypeError(
-				'String expected for argument 2. '.\ucfirst(\gettype($password))
+			throw new TypeError(
+				'String expected for argument 2. '.ucfirst(gettype($password))
 				.' given instead.'
 			);
 		}
-		if ( ! \is_bool($raw_binary))
+		if ( ! is_bool($raw_binary))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'Boolean expected for argument 3. '
-				.\ucfirst(\gettype($raw_binary)).' given instead.'
+				.ucfirst(gettype($raw_binary)).' given instead.'
 			);
 		}
 
@@ -176,29 +187,29 @@ class Crypto {
 	 * @throws Ex\EnvironmentIsBrokenException
 	 * @throws Ex\WrongKeyOrModifiedCiphertextException
 	 *
-	 * @throws \TypeError
+	 * @throws TypeError
 	 */
 	public static function decrypt($ciphertext, $key, $raw_binary = false)
 	{
-		if ( ! \is_string($ciphertext))
+		if ( ! is_string($ciphertext))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'String expected for argument 1. '
-				.\ucfirst(\gettype($ciphertext)).' given instead.'
+				.ucfirst(gettype($ciphertext)).' given instead.'
 			);
 		}
 		if ( ! ($key instanceof Key))
 		{
-			throw new \TypeError(
-				'Key expected for argument 2. '.\ucfirst(\gettype($key))
+			throw new TypeError(
+				'Key expected for argument 2. '.ucfirst(gettype($key))
 				.' given instead.'
 			);
 		}
-		if ( ! \is_bool($raw_binary))
+		if ( ! is_bool($raw_binary))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'Boolean expected for argument 3. '
-				.\ucfirst(\gettype($raw_binary)).' given instead.'
+				.ucfirst(gettype($raw_binary)).' given instead.'
 			);
 		}
 
@@ -266,7 +277,7 @@ class Crypto {
 			Core::HEADER_VERSION_SIZE,
 			Core::SALT_BYTE_SIZE
 		);
-		Core::ensureTrue(\is_string($salt));
+		Core::ensureTrue(is_string($salt));
 
 		// Get the IV.
 		/** @var string $iv */
@@ -275,7 +286,7 @@ class Crypto {
 			Core::HEADER_VERSION_SIZE + Core::SALT_BYTE_SIZE,
 			Core::BLOCK_BYTE_SIZE
 		);
-		Core::ensureTrue(\is_string($iv));
+		Core::ensureTrue(is_string($iv));
 
 		// Get the HMAC.
 		/** @var string $hmac */
@@ -284,7 +295,7 @@ class Crypto {
 			Core::ourStrlen($ciphertext) - Core::MAC_BYTE_SIZE,
 			Core::MAC_BYTE_SIZE
 		);
-		Core::ensureTrue(\is_string($hmac));
+		Core::ensureTrue(is_string($hmac));
 
 		// Get the actual encrypted ciphertext.
 		/** @var string $encrypted */
@@ -296,7 +307,7 @@ class Crypto {
 			- Core::SALT_BYTE_SIZE -
 			Core::BLOCK_BYTE_SIZE - Core::HEADER_VERSION_SIZE
 		);
-		Core::ensureTrue(\is_string($encrypted));
+		Core::ensureTrue(is_string($encrypted));
 
 		// Derive the separate encryption and authentication keys from the key
 		// or password, whichever it is.
@@ -333,10 +344,10 @@ class Crypto {
 	protected static function verifyHMAC(
 		$expected_hmac,
 		$message,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$key
 	) {
-		$message_hmac = \hash_hmac(Core::HASH_FUNCTION_NAME, $message, $key,
+		$message_hmac = hash_hmac(Core::HASH_FUNCTION_NAME, $message, $key,
 			true);
 
 		return Core::hashEquals($message_hmac, $expected_hmac);
@@ -356,9 +367,9 @@ class Crypto {
 	 */
 	protected static function plainDecrypt(
 		$ciphertext,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$key,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$iv,
 		$cipherMethod
 	) {
@@ -366,14 +377,14 @@ class Crypto {
 		Core::ensureFunctionExists('openssl_decrypt');
 
 		/** @var string $plaintext */
-		$plaintext = \openssl_decrypt(
+		$plaintext = openssl_decrypt(
 			$ciphertext,
 			$cipherMethod,
 			$key,
 			OPENSSL_RAW_DATA,
 			$iv
 		);
-		Core::ensureTrue(\is_string($plaintext), 'openssl_decrypt() failed.');
+		Core::ensureTrue(is_string($plaintext), 'openssl_decrypt() failed.');
 
 		return $plaintext;
 	}
@@ -388,35 +399,35 @@ class Crypto {
 	 *
 	 * @return string
 	 * @throws Ex\WrongKeyOrModifiedCiphertextException
-	 * @throws \TypeError
+	 * @throws TypeError
 	 *
 	 * @throws Ex\EnvironmentIsBrokenException
 	 */
 	public static function decryptWithPassword(
 		$ciphertext,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$password,
 		$raw_binary = false
 	) {
-		if ( ! \is_string($ciphertext))
+		if ( ! is_string($ciphertext))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'String expected for argument 1. '
-				.\ucfirst(\gettype($ciphertext)).' given instead.'
+				.ucfirst(gettype($ciphertext)).' given instead.'
 			);
 		}
-		if ( ! \is_string($password))
+		if ( ! is_string($password))
 		{
-			throw new \TypeError(
-				'String expected for argument 2. '.\ucfirst(\gettype($password))
+			throw new TypeError(
+				'String expected for argument 2. '.ucfirst(gettype($password))
 				.' given instead.'
 			);
 		}
-		if ( ! \is_bool($raw_binary))
+		if ( ! is_bool($raw_binary))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'Boolean expected for argument 3. '
-				.\ucfirst(\gettype($raw_binary)).' given instead.'
+				.ucfirst(gettype($raw_binary)).' given instead.'
 			);
 		}
 
@@ -435,26 +446,26 @@ class Crypto {
 	 *
 	 * @return string
 	 * @throws Ex\WrongKeyOrModifiedCiphertextException
-	 * @throws \TypeError
+	 * @throws TypeError
 	 *
 	 * @throws Ex\EnvironmentIsBrokenException
 	 */
 	public static function legacyDecrypt(
 		$ciphertext,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$key
 	) {
-		if ( ! \is_string($ciphertext))
+		if ( ! is_string($ciphertext))
 		{
-			throw new \TypeError(
+			throw new TypeError(
 				'String expected for argument 1. '
-				.\ucfirst(\gettype($ciphertext)).' given instead.'
+				.ucfirst(gettype($ciphertext)).' given instead.'
 			);
 		}
-		if ( ! \is_string($key))
+		if ( ! is_string($key))
 		{
-			throw new \TypeError(
-				'String expected for argument 2. '.\ucfirst(\gettype($key))
+			throw new TypeError(
+				'String expected for argument 2. '.ucfirst(gettype($key))
 				.' given instead.'
 			);
 		}
@@ -472,13 +483,13 @@ class Crypto {
 		 * @var string
 		 */
 		$hmac = Core::ourSubstr($ciphertext, 0, Core::LEGACY_MAC_BYTE_SIZE);
-		Core::ensureTrue(\is_string($hmac));
+		Core::ensureTrue(is_string($hmac));
 		/**
 		 * @var string
 		 */
 		$messageCiphertext = Core::ourSubstr($ciphertext,
 			Core::LEGACY_MAC_BYTE_SIZE);
-		Core::ensureTrue(\is_string($messageCiphertext));
+		Core::ensureTrue(is_string($messageCiphertext));
 
 		// Regenerate the same authentication sub-key.
 		$akey = Core::HKDF(
@@ -514,14 +525,14 @@ class Crypto {
 			 */
 			$iv = Core::ourSubstr($messageCiphertext, 0,
 				Core::LEGACY_BLOCK_BYTE_SIZE);
-			Core::ensureTrue(\is_string($iv));
+			Core::ensureTrue(is_string($iv));
 
 			/**
 			 * @var string
 			 */
 			$actualCiphertext = Core::ourSubstr($messageCiphertext,
 				Core::LEGACY_BLOCK_BYTE_SIZE);
-			Core::ensureTrue(\is_string($actualCiphertext));
+			Core::ensureTrue(is_string($actualCiphertext));
 
 			// Do the decryption.
 			$plaintext = self::plainDecrypt($actualCiphertext, $ekey, $iv,

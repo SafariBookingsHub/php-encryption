@@ -3,6 +3,9 @@
 namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
+use SensitiveParameter;
+
+use function hash;
 
 final class KeyProtectedByPassword {
 	const PASSWORD_KEY_CURRENT_VERSION = "\xDE\xF1\x00\x00";
@@ -32,7 +35,7 @@ final class KeyProtectedByPassword {
 	 *
 	 */
 	public static function createRandomPasswordProtectedKey(
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$password
 	) {
 		$inner_key = Key::createNewRandomKey();
@@ -42,7 +45,7 @@ final class KeyProtectedByPassword {
 		 * same protocol. */
 		$encrypted_key = Crypto::encryptWithPassword(
 			$inner_key->saveToAsciiSafeString(),
-			\hash(Core::HASH_FUNCTION_NAME, $password, true),
+			hash(Core::HASH_FUNCTION_NAME, $password, true),
 			true
 		);
 
@@ -77,9 +80,9 @@ final class KeyProtectedByPassword {
 	 * @throws Ex\EnvironmentIsBrokenException
 	 */
 	public function changePassword(
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$current_password,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$new_password
 	) {
 		$inner_key = $this->unlockKey($current_password);
@@ -89,7 +92,7 @@ final class KeyProtectedByPassword {
 		 * same protocol. */
 		$encrypted_key = Crypto::encryptWithPassword(
 			$inner_key->saveToAsciiSafeString(),
-			\hash(Core::HASH_FUNCTION_NAME, $new_password, true),
+			hash(Core::HASH_FUNCTION_NAME, $new_password, true),
 			true
 		);
 
@@ -110,14 +113,14 @@ final class KeyProtectedByPassword {
 	 *
 	 */
 	public function unlockKey(
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$password
 	) {
 		try
 		{
 			$inner_key_encoded = Crypto::decryptWithPassword(
 				$this->encrypted_key,
-				\hash(Core::HASH_FUNCTION_NAME, $password, true),
+				hash(Core::HASH_FUNCTION_NAME, $password, true),
 				true
 			);
 
@@ -147,7 +150,7 @@ final class KeyProtectedByPassword {
 	 *
 	 */
 	public static function loadFromAsciiSafeString(
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$saved_key_string
 	) {
 		$encrypted_key = Encoding::loadBytesFromChecksummedAsciiSafeString(

@@ -4,6 +4,11 @@ namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
 
+use SensitiveParameter;
+
+use function hash;
+use function is_string;
+
 final class KeyOrPassword {
 	const PBKDF2_ITERATIONS = 100000;
 	const SECRET_TYPE_KEY = 1;
@@ -27,7 +32,7 @@ final class KeyOrPassword {
 	 */
 	private function __construct(
 		$secret_type,
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$secret
 	) {
 		// The constructor is private, so these should never throw.
@@ -37,7 +42,7 @@ final class KeyOrPassword {
 		}
 		elseif ($secret_type === self::SECRET_TYPE_PASSWORD)
 		{
-			Core::ensureTrue(\is_string($secret));
+			Core::ensureTrue(is_string($secret));
 		}
 		else
 		{
@@ -67,7 +72,7 @@ final class KeyOrPassword {
 	 * @return KeyOrPassword
 	 */
 	public static function createFromPassword(
-		#[\SensitiveParameter]
+		#[SensitiveParameter]
 		$password
 	) {
 		return new KeyOrPassword(self::SECRET_TYPE_PASSWORD, $password);
@@ -91,46 +96,15 @@ final class KeyOrPassword {
 			'Bad salt.'
 		);
 
-		if ($this->secret_type === self::SECRET_TYPE_KEY)
-		{
+		$prekey = '';
+
+		if ($this->secret_type === self::SECRET_TYPE_KEY) {
 			Core::ensureTrue($this->secret instanceof Key);
-			/**
-			 * @psalm-suppress PossiblyInvalidMethodCall
-			 */
-			$akey = Core::HKDF(
-				Core::HASH_FUNCTION_NAME,
-				$this->secret->getRawBytes(),
-				Core::KEY_BYTE_SIZE,
-				Core::AUTHENTICATION_INFO_STRING,
-				$salt
-			);
-			/**
-			 * @psalm-suppress PossiblyInvalidMethodCall
-			 */
-			$ekey = Core::HKDF(
-				Core::HASH_FUNCTION_NAME,
-				$this->secret->getRawBytes(),
-				Core::KEY_BYTE_SIZE,
-				Core::ENCRYPTION_INFO_STRING,
-				$salt
-			);
-
-			return new DerivedKeys($akey, $ekey);
+			$prekey = $this->secret->getRawBytes();
 		}
-		elseif ($this->secret_type === self::SECRET_TYPE_PASSWORD)
-		{
-			Core::ensureTrue(\is_string($this->secret));
-			/* Our PBKDF2 polyfill is vulnerable to a DoS attack documented in
-			 * GitHub issue #230. The fix is to pre-hash the password to ensure
-			 * it is short. We do the prehashing here instead of in pbkdf2() so
-			 * that pbkdf2() still computes the function as defined by the
-			 * standard. */
-
-			/**
-			 * @psalm-suppress PossiblyInvalidArgument
-			 */
-			$prehash = \hash(Core::HASH_FUNCTION_NAME, $this->secret, true);
-
+		elseif ($this->secret_type === self::SECRET_TYPE_PASSWORD) {
+			Core::ensureTrue(is_string($this->secret));
+			$prehash = hash(Core::HASH_FUNCTION_NAME, $this->secret, true);
 			$prekey = Core::pbkdf2(
 				Core::HASH_FUNCTION_NAME,
 				$prehash,
@@ -139,27 +113,27 @@ final class KeyOrPassword {
 				Core::KEY_BYTE_SIZE,
 				true
 			);
-			$akey = Core::HKDF(
-				Core::HASH_FUNCTION_NAME,
-				$prekey,
-				Core::KEY_BYTE_SIZE,
-				Core::AUTHENTICATION_INFO_STRING,
-				$salt
-			);
-			/* Note the cryptographic re-use of $salt here. */
-			$ekey = Core::HKDF(
-				Core::HASH_FUNCTION_NAME,
-				$prekey,
-				Core::KEY_BYTE_SIZE,
-				Core::ENCRYPTION_INFO_STRING,
-				$salt
-			);
-
-			return new DerivedKeys($akey, $ekey);
 		}
-		else
-		{
+		else {
 			throw new Ex\EnvironmentIsBrokenException('Bad secret type.');
 		}
+
+		$akey = Core::HKDF(
+			Core::HASH_FUNCTION_NAME,
+			$prekey,
+			Core::KEY_BYTE_SIZE,
+			Core::AUTHENTICATION_INFO_STRING,
+			$salt
+		);
+		$ekey = Core::HKDF(
+			Core::HASH_FUNCTION_NAME,
+			$prekey,
+			Core::KEY_BYTE_SIZE,
+			Core::ENCRYPTION_INFO_STRING,
+			$salt
+		);
+
+		return new DerivedKeys($akey, $ekey);
 	}
+
 }

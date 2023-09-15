@@ -4,6 +4,13 @@ namespace Defuse\Crypto;
 
 use Defuse\Crypto\Exception as Ex;
 
+use function chr;
+use function hash_hmac;
+use function in_array;
+use function openssl_get_cipher_methods;
+use function ord;
+use function str_repeat;
+
 /*
  * We're using static class inheritance to get access to protected methods
  * inside Crypto. To make it easy to know where the method we're calling can be
@@ -47,7 +54,7 @@ class RuntimeTests extends Crypto {
 			$test_state = 2;
 
 			Core::ensureFunctionExists('openssl_get_cipher_methods');
-			if (\in_array(Core::CIPHER_METHOD, \openssl_get_cipher_methods())
+			if (in_array(Core::CIPHER_METHOD, openssl_get_cipher_methods())
 				=== false
 			)
 			{
@@ -128,12 +135,12 @@ class RuntimeTests extends Crypto {
 	private static function HMACTestVector()
 	{
 		// HMAC test vector From RFC 4231 (Test Case 1)
-		$key = \str_repeat("\x0b", 20);
+		$key = str_repeat("\x0b", 20);
 		$data = 'Hi There';
 		$correct
 			= 'b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7';
 		Core::ensureTrue(
-			\hash_hmac(Core::HASH_FUNCTION_NAME, $data, $key) === $correct
+			hash_hmac(Core::HASH_FUNCTION_NAME, $data, $key) === $correct
 		);
 	}
 
@@ -148,7 +155,7 @@ class RuntimeTests extends Crypto {
 		// HKDF test vectors from RFC 5869
 
 		// Test Case 1
-		$ikm = \str_repeat("\x0b", 22);
+		$ikm = str_repeat("\x0b", 22);
 		$salt = Encoding::hexToBin('000102030405060708090a0b0c');
 		$info = Encoding::hexToBin('f0f1f2f3f4f5f6f7f8f9');
 		$length = 42;
@@ -161,7 +168,7 @@ class RuntimeTests extends Crypto {
 		Core::ensureTrue($computed_okm === $okm);
 
 		// Test Case 7
-		$ikm = \str_repeat("\x0c", 22);
+		$ikm = str_repeat("\x0c", 22);
 		$length = 42;
 		$okm = Encoding::hexToBin(
 			'2c91117204d745f3500d636a62f64f0a'.
@@ -221,7 +228,7 @@ class RuntimeTests extends Crypto {
 		{
 			try
 			{
-				$ciphertext[$index] = \chr((\ord($ciphertext[$index]) + 1)
+				$ciphertext[$index] = chr((ord($ciphertext[$index]) + 1)
 					% 256);
 				Crypto::decrypt($ciphertext, $key, true);
 				throw new Ex\EnvironmentIsBrokenException();
@@ -247,7 +254,7 @@ class RuntimeTests extends Crypto {
 
 		// Ciphertext too small.
 		$key = Key::createNewRandomKey();
-		$ciphertext = \str_repeat('A', Core::MINIMUM_CIPHERTEXT_SIZE - 1);
+		$ciphertext = str_repeat('A', Core::MINIMUM_CIPHERTEXT_SIZE - 1);
 		try
 		{
 			Crypto::decrypt($ciphertext, $key, true);
