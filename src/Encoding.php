@@ -118,18 +118,42 @@ final class Encoding {
 	{
 		$hex = '';
 		$len = Core::ourStrlen($byte_string);
+
 		for ($i = 0; $i < $len; ++$i)
 		{
-			$c = \ord($byte_string[$i]) & 0xf;
-			$b = \ord($byte_string[$i]) >> 4;
-			$hex .= \pack(
-				'CC',
-				87 + $b + ((($b - 10) >> 8) & ~38),
-				87 + $c + ((($c - 10) >> 8) & ~38)
-			);
+			$byte = \ord($byte_string[$i]);
+
+			// Extract the lower 4 bits (rightmost hex digit)
+			$lowNibble = $byte & 0xf;
+
+			// Extract the higher 4 bits (leftmost hex digit) and shift right to get the value
+			$highNibble = $byte >> 4;
+
+			// Convert high and low nibbles to hex representation
+			$hexHigh = self::decimalToHexChar($highNibble);
+			$hexLow = self::decimalToHexChar($lowNibble);
+
+			$hex .= $hexHigh . $hexLow;
 		}
 
 		return $hex;
+	}
+
+	/**
+	 * Convert a decimal value (0-15) to its corresponding hexadecimal character.
+	 *
+	 * @param int $decimalValue Value between 0 and 15 inclusive.
+	 * @return string The corresponding hexadecimal character.
+	 */
+	private static function decimalToHexChar($decimalValue)
+	{
+		// If value is between 0 and 9, return the character representation of that value
+		if ($decimalValue >= 0 && $decimalValue <= 9) {
+			return chr(48 + $decimalValue); // 48 is the ASCII value for '0'
+		}
+
+		// If value is between 10 and 15, return the character representation (A-F)
+		return chr(87 + $decimalValue); // 87 is the ASCII value for 'a' minus 10
 	}
 
 	/*
